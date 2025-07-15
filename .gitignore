@@ -1,0 +1,37 @@
+############################################
+# Terraform directories & caches
+############################################
+.terraform/                 # provider binaries + downloaded modules
+.terraform/*                # (redundant safety net)
+
+############################################
+# Terraform state ‑ NEVER commit these
+############################################
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate
+*.tfstate.*                 # if you keep env‑specific copies locally
+
+############################################
+# Plans, crash logs, and locals
+############################################
+*.tfplan                    # binary plan files
+*.out                       # legacy plan output
+crash.log
+crash.*                     # full panic dumps
+
+############################################
+# Variable files that may hold secrets
+############################################
+*.tfvars
+*.tfvars.json
+
+############################################
+# Local CLI & override helpers
+############################################
+.terraformrc
+terraform.rc
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json

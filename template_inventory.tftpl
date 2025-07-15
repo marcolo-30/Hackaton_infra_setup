@@ -1,0 +1,51 @@
+all:
+  children:
+
+    management_cluster:
+      hosts:
+        ${management.name}:
+          ansible_host: ${management.ip}
+          ansible_user: ${ansible_user}
+          ansible_ssh_private_key_file: "/home/${ansible_user}/.ssh/id_rsa"
+          ansible_python_interpreter: /usr/bin/python3
+          k3s_cluster_name: management
+          pod_cidr: "10.10.0.0/16"
+          service_cidr: "10.11.0.0/16"
+          labels:
+            is_vm: true
+            mlsysops/continuumLayer: continuum
+            vaccel: "false"
+
+%{ for cluster in clusters ~}
+    ${cluster.name}:
+      children:
+        master_nodes:
+          hosts:
+            ${cluster.master.name}:
+              ansible_host: ${cluster.master.ip}
+              ansible_user: ${ansible_user}
+              ansible_ssh_private_key_file: "/home/${ansible_user}/.ssh/id_rsa"
+              ansible_python_interpreter: /usr/bin/python3
+              k3s_cluster_name: ${cluster.master.k3s_name}
+              pod_cidr: "${cluster.master.pod_cidr}"
+              service_cidr: "${cluster.master.service_cidr}"
+              labels:
+                is_vm: true
+                mlsysops/continuumLayer: cluster
+                vaccel: "false"
+
+        worker_nodes:
+          hosts:
+%{ for worker in cluster.workers ~}
+            ${worker.name}:
+              ansible_host: ${worker.ip}
+              ansible_user: ${ansible_user}
+              ansible_ssh_private_key_file: "/home/${ansible_user}/.ssh/id_rsa"
+              ansible_python_interpreter: /usr/bin/python3
+              k3s_cluster_name: ${cluster.master.k3s_name}
+              labels:
+                is_vm: true
+                mlsysops/continuumLayer: node
+%{ endfor ~}
+%{ endfor ~}
+
