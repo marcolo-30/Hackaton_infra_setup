@@ -1,6 +1,7 @@
 ############################################
 # Terraform directories & caches
 ############################################
+terraform/
 .terraform/                 # provider binaries + downloaded modules
 .terraform/*                # (redundant safety net)
 

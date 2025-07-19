@@ -161,7 +161,7 @@ locals {
 # 6.  Write inventory.yaml
 #######################
 resource "local_file" "inventory" {
-  filename = "${path.module}/inventory.yaml"
+  filename = "${path.module}/inventory.yml"
   content  = local.rendered_inventory
 }
 
