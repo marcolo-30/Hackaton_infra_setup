@@ -1,6 +1,6 @@
-###############################################################
-# main.tf  –  Hetzner VMs + auto-generated Ansible inventory
-###############################################################
+#################################################################
+# main.tf – Hetzner VMs + auto-generated Ansible inventory
+#################################################################
 
 terraform {
   required_providers {
@@ -15,9 +15,9 @@ terraform {
   }
 }
 
-#######################
-# 1.  Provider & SSH key
-#######################
+#############################
+# 1. Provider & SSH Key
+#############################
 provider "hcloud" {
   token = var.hcloud_token
 }
@@ -27,10 +27,9 @@ resource "hcloud_ssh_key" "default" {
   public_key = file(var.ssh_public_key_path)
 }
 
-
-#######################
-# 2.  Private LAN (optional but handy)
-#######################
+#############################
+# 2. Private LAN
+#############################
 resource "hcloud_network" "lan" {
   name     = "mlsysops-net"
   ip_range = "10.0.0.0/16"
@@ -43,25 +42,42 @@ resource "hcloud_network_subnet" "lan_subnet" {
   ip_range     = "10.0.0.0/24"
 }
 
-#######################
-# 3.  Deterministic private IPs
-#######################
+##############################################
+# 3. Server Types & Deterministic Private IPs
+##############################################
 locals {
-  # 10.0.0.10, .11, .12, … (one per VM)
+  # Map VM roles to specific server types.
+  # This assumes your vm_names are like "group-role", e.g., "ml-continuum".
+  vm_server_types = {
+    "continuum" = "cx32"
+    "cluster"   = "cx32"
+    "node1"     = "ccx33"
+    "node2"     = "ccx43"
+  }
+
+  # A default server type for any VMs not defined above.
+  default_server_type = "cx22"
+
+  # Assigns fixed private IPs: 10.0.0.10, .11, .12, etc. (one per VM)
   fixed_ips = {
     for idx, name in var.vm_names :
     name => cidrhost("10.0.0.0/24", idx + 10)
   }
 }
 
-#######################
-# 4.  VM deployment
-#######################
+#############################
+# 4. VM Deployment
+#############################
 resource "hcloud_server" "vm" {
-  count       = length(var.vm_names)
-  name        = var.vm_names[count.index]
-  image       = "ubuntu-22.04"
-  server_type = "cx22"
+  count  = length(var.vm_names)
+  name   = var.vm_names[count.index]
+  image  = "ubuntu-22.04"
+  # Dynamically look up the server type.
+  server_type = lookup(
+    local.vm_server_types,
+    split("-", var.vm_names[count.index])[1], # Gets the role (e.g., "node1")
+    local.default_server_type                 # Fallback if role not found
+  )
   location    = "fsn1"
   ssh_keys    = [hcloud_ssh_key.default.id]
 
@@ -71,39 +87,28 @@ resource "hcloud_server" "vm" {
     ip         = local.fixed_ips[var.vm_names[count.index]]
   }
 
-  # Only the “-continuum” VM gets a public IPv4
-  #dynamic "public_net" {
-  #  for_each = endswith(var.vm_names[count.index], "-continuum") ? [1] : []
-  #  content {
-  #    ipv4_enabled = true
-  #    ipv6_enabled = false
-  #  }
-  #}
-
-
-  # Inside resource "hcloud_server" "vm" { … }
+  # Each VM gets its own public IPv4
   public_net {
-    ipv4_enabled = true # ← each VM gets its own public IPv4
+    ipv4_enabled = true
     ipv6_enabled = false
   }
 
-
-  # cloud-init
+  # Use cloud-init for initial server setup
   user_data = templatefile("${path.module}/cloud-init.yaml", {
     public_key = file(var.ssh_public_key_path)
   })
 }
 
-#######################
-# 5.  Build the inventory data in locals (DYNAMIC VERSION)
-#######################
+#############################
+# 5. Build Inventory Data
+#############################
 locals {
-  # 5a. Extraer los prefijos de grupo (ej: "group1", "group2") de forma única
+  # 5a. Extract unique group prefixes (e.g., "group1", "group2") from VM names
   group_names = distinct([
     for name in var.vm_names : split("-", name)[0]
   ])
 
-  # Public + private IPs for every VM (esto no cambia)
+  # 5b. Map each VM name to its public and private IPs
   server_ips = {
     for vm in hcloud_server.vm :
     vm.name => {
@@ -112,27 +117,27 @@ locals {
     }
   }
 
-  # 5b. Encontrar el management host dinámicamente
-  # Crea una lista de todos los nodos "-continuum" y selecciona el primero como el principal.
-  management_vm_name = [
+  # 5c. Dynamically find the management host
+  # It creates a list of all nodes ending with "-continuum" and selects the first one.
+  management_vm_name = one([
     for name in var.vm_names : name if endswith(name, "-continuum")
-  ][0] # <-- Selecciona el primer elemento de la lista
+  ])
 
   management_host = {
     name = local.management_vm_name
     ip   = local.server_ips[local.management_vm_name].public
   }
 
-  # 5c. Generar la lista de clusters dinámicamente
+  # 5d. Dynamically generate the list of clusters
   clusters = [
     for idx, group in local.group_names : {
-      name = "cluster${idx + 1}" # ej: cluster1, cluster2
+      name = "cluster${idx + 1}" # e.g., cluster1, cluster2
 
       master = {
-        name     = "${group}-cluster"
-        ip       = local.server_ips["${group}-cluster"].public
-        k3s_name = "${group}-cluster"
-        # CIDRs dinámicos para evitar solapamientos entre clusters
+        name       = "${group}-cluster"
+        ip         = local.server_ips["${group}-cluster"].public
+        k3s_name   = "${group}-cluster"
+        # Dynamic CIDRs to avoid overlaps between clusters
         pod_cidr     = "10.${12 + idx}.0.0/16"
         service_cidr = "10.${100 + idx}.0.0/16"
       }
@@ -141,12 +146,12 @@ locals {
         for n in var.vm_names : {
           name = n
           ip   = local.server_ips[n].public
-        } if startswith(n, "${group}-node") # Encuentra workers por prefijo
+        } if startswith(n, "${group}-node") # Find workers by their name prefix
       ]
     }
   ]
 
-  # 5d. Renderizar el inventario (esto no cambia)
+  # 5e. Render the inventory file content from the template
   rendered_inventory = templatefile(
     "${path.module}/template_inventory.tftpl",
     {
@@ -157,18 +162,23 @@ locals {
   )
 }
 
-#######################
-# 6.  Write inventory.yaml
-#######################
+#############################
+# 6. Write inventory.yml
+#############################
 resource "local_file" "inventory" {
   filename = "${path.module}/inventory.yml"
   content  = local.rendered_inventory
 }
 
-#######################
-# 7.  Helpful output
-#######################
-output "inventory_file" {
+#############################
+# 7. Outputs
+#############################
+output "inventory_file_path" {
   value       = local_file.inventory.filename
-  description = "Path to the generated Ansible inventory"
+  description = "Path to the generated Ansible inventory file."
+}
+
+output "management_host_ip" {
+  value       = local.management_host.ip
+  description = "Public IP address of the management host."
 }
