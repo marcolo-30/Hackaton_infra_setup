@@ -1,0 +1,3 @@
+[submodule "mlsysops-framework"]
+	path = mlsysops-framework
+	url = https://github.com/mlsysops-eu/mlsysops-framework.git
