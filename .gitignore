@@ -36,3 +36,14 @@ override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
+hackenv/
+.terraform/
+.karmada*
+.terraform.lock.hcl
+.terraform/providers/registry.terraform.io/hashicorp/local/2.5.3/linux_amd64/LICENSE.txt
+.terraform/providers/registry.terraform.io/hashicorp/local/2.5.3/linux_amd64/terraform-provider-local_v2.5.3_x5
+.terraform/providers/registry.terraform.io/hashicorp/template/2.2.0/linux_amd64/terraform-provider-template_v2.2.0_x4
+.terraform/providers/registry.terraform.io/hetznercloud/hcloud/1.51.0/linux_amd64/CHANGELOG.md
+.terraform/providers/registry.terraform.io/hetznercloud/hcloud/1.51.0/linux_amd64/LICENSE
+.terraform/providers/registry.terraform.io/hetznercloud/hcloud/1.51.0/linux_amd64/README.md
+.terraform/providers/registry.terraform.io/hetznercloud/hcloud/1.51.0/linux_amd64/terraform-provider-hcloud_v1.51.0

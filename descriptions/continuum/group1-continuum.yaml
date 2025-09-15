@@ -1,0 +1,4 @@
+MLSysOpsContinuum:
+  continuum_id: group1-continuum
+  clusters:
+    - group1-cluster

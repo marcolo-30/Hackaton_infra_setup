@@ -47,21 +47,37 @@ resource "hcloud_network_subnet" "lan_subnet" {
 ##############################################
 locals {
   # Map VM roles to specific server types.
-  # This assumes your vm_names are like "group-role", e.g., "ml-continuum".
+  # This assumes your vm_names are like "groupx-role", e.g., "group1-continuum".
   vm_server_types = {
-    "continuum" = "cx32"
-    "cluster"   = "cx32"
-    "node1"     = "ccx33"
-    "node2"     = "ccx43"
+    #"continuum" = "cx32"
+    #"cluster"   = "cx32"
+    #"node1"     = "ccx23"
+    #"node2"     = "ccx33"
+    "continuum" = "cx22"
+    "cluster"   = "cx22"
+    "node1"     = "cx22"
+    "node2"     = "cx22"
   }
 
   # A default server type for any VMs not defined above.
   default_server_type = "cx22"
 
-  # Assigns fixed private IPs: 10.0.0.10, .11, .12, etc. (one per VM)
+  # Role-based fixed private IPs (safe since you deploy one group at a time).
+  # - *-continuum → 10.0.0.10
+  # - *-cluster   → 10.0.0.11
+  # - *-node1     → 10.0.0.12
+  # - *-node2     → 10.0.0.14
+  # Any other role falls back to a deterministic address to avoid collisions
+  # with the hand-picked addresses in .10-.14
   fixed_ips = {
-    for idx, name in var.vm_names :
-    name => cidrhost("10.0.0.0/24", idx + 10)
+    for idx, name in var.vm_names : name =>
+    (
+      endswith(name, "-continuum") ? "10.0.0.10" :
+      endswith(name, "-cluster")   ? "10.0.0.11" :
+      endswith(name, "-node1")     ? "10.0.0.12" :
+      endswith(name, "-node2")     ? "10.0.0.14" :
+      cidrhost("10.0.0.0/24", idx + 20)
+    )
   }
 }
 
@@ -72,13 +88,17 @@ resource "hcloud_server" "vm" {
   count  = length(var.vm_names)
   name   = var.vm_names[count.index]
   image  = "ubuntu-22.04"
+
   # Dynamically look up the server type.
   server_type = lookup(
     local.vm_server_types,
-    split("-", var.vm_names[count.index])[1], # Gets the role (e.g., "node1")
-    local.default_server_type                 # Fallback if role not found
+    split("-", var.vm_names[count.index])[1], # role (e.g., "node1")
+    local.default_server_type                 # fallback if role not found
   )
-  location    = "fsn1"
+
+  #location    = "hel1"
+  #location    = "fsn1"
+  location    = "nbg1"
   ssh_keys    = [hcloud_ssh_key.default.id]
 
   # Attach to the LAN with its fixed private address
@@ -117,8 +137,7 @@ locals {
     }
   }
 
-  # 5c. Dynamically find the management host
-  # It creates a list of all nodes ending with "-continuum" and selects the first one.
+  # 5c. Dynamically find the management host (first *-continuum VM)
   management_vm_name = one([
     for name in var.vm_names : name if endswith(name, "-continuum")
   ])
@@ -137,6 +156,7 @@ locals {
         name       = "${group}-cluster"
         ip         = local.server_ips["${group}-cluster"].public
         k3s_name   = "${group}-cluster"
+
         # Dynamic CIDRs to avoid overlaps between clusters
         pod_cidr     = "10.${12 + idx}.0.0/16"
         service_cidr = "10.${100 + idx}.0.0/16"

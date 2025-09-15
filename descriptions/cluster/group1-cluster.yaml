@@ -1,0 +1,6 @@
+MLSysOpsCluster:
+  name: group1-cluster
+  cluster_id: group1-cluster
+  nodes:
+    - group1-node1
+    - group1-node2

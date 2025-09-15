@@ -3,15 +3,15 @@ variable "vm_names" {
   type        = list(string)
   default = [
     "group1-continuum",
-    "group1-cluster", "group1-node1", "group1-node2"
-    #"group2-continuum",
-    #"group2-cluster", "group2-node1", "group2-node2"
-    #"group3-continuum",
-    #"group3-cluster", "group3-node1","group3-node2"
+    "group1-cluster", "group1-node1", "group1-node2",
+    #"group2-continuum"
+    #"group2-cluster", "group2-node1", "group2-node2",
+    #"group3-continuum"
+    #"group3-cluster", "group3-node1","group3-node2",
     #"group4-continuum",
-    #"group4-cluster", "group4-node1","group4-node2"
+    #"group4-cluster", "group4-node1","group4-node2",
     #"group5-continuum",
-    #"group5-cluster", "group5-node1","group5-node2"
+    #"group5-cluster", "group5-node1","group5-node2",
     #"group6-continuum",
     #"group6-cluster", "group6-node1","group6-node2"
 
