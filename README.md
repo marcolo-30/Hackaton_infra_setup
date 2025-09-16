@@ -12,6 +12,7 @@ The included `script.sh` provisions the infrastructure, installs K3s and Karmada
 ```bash
 git clone https://github.com/marcolo-30/Hackaton_infra_setup.git
 cd Hackaton_infra_setup
+git submodule update --init --recursive
 ```
 
 ### 2. Make sure dependencies are installed
