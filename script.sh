@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+
+# ===== Start time =====
+START_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+echo "⏱️ Script started at: ${START_TIME}"
+
+
 # ===== Pre-flight checks =====
 echo "Checking for required dependencies..."
 
@@ -71,7 +77,10 @@ EOF
   echo "terraform.tfvars file created with your Hetzner token and SSH public key path."
 fi
 
+DEPLOY_TIME=$(date '+%Y-%m-%d %H:%M:%S')
+echo "⏱️ Script started at: ${DEPLOY_TIME}"
 
+terraform init
 
 # ===== Config =====
 HOST_KEY="group1-continuum"        # The inventory host whose IP we need
@@ -124,9 +133,7 @@ run_with_retries() {
   done
 }
 
-# ===== Start time =====
-START_TIME=$(date '+%Y-%m-%d %H:%M:%S')
-echo "⏱️ Script started at: ${START_TIME}"
+
 
 # ===== Step 1: Terraform apply =====
 STEP=$((STEP+1))
@@ -241,4 +248,5 @@ show_progress "$(percent ${STEP})" "Remote CLI deploy"
 # ===== End time =====
 END_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 echo "🎉 100% COMPLETED: All steps finished successfully!"
+echo "⏱️ Deploy started at: ${DEPLOY_TIME}"
 echo "⏱️ Script finished at: ${END_TIME}"
