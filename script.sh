@@ -1,6 +1,50 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+# ===== Pre-flight checks =====
+echo "Checking for required dependencies..."
+
+install_if_missing() {
+  local bin_name=$1
+  local install_cmd=$2
+
+  if ! command -v "$bin_name" >/dev/null 2>&1; then
+    echo "$bin_name not found on this system."
+    if ! command -v sudo >/dev/null 2>&1; then
+      echo "Cannot install $bin_name automatically (sudo not available). Please install $bin_name manually and re-run the script."
+      exit 1
+    fi
+    echo "Installing $bin_name..."
+    eval "$install_cmd" || {
+      echo "Failed to install $bin_name. Please install manually and re-run the script."
+      exit 1
+    }
+    echo "$bin_name installed successfully."
+  else
+    echo "$bin_name is already installed: $(command -v $bin_name)"
+  fi
+}
+
+# Install Terraform if missing (Ubuntu/Debian)
+install_if_missing "terraform" "
+sudo apt-get update -y &&
+sudo apt-get install -y gnupg software-properties-common curl &&
+curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg &&
+echo \"deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com \$(lsb_release -cs) main\" | sudo tee /etc/apt/sources.list.d/hashicorp.list &&
+sudo apt-get update -y &&
+sudo apt-get install -y terraform
+"
+
+# Install Ansible if missing (Ubuntu/Debian)
+install_if_missing "ansible" "
+sudo apt-get update -y &&
+sudo apt-get install -y ansible
+"
+
+echo "All required dependencies are installed."
+echo
+
+
 # ===== Config =====
 HOST_KEY="group1-continuum"        # The inventory host whose IP we need
 REMOTE_USER="mlsysops"             # SSH user on the remote
