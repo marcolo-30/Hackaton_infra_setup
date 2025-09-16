@@ -44,6 +44,34 @@ sudo apt-get install -y ansible
 echo "All required dependencies are installed."
 echo
 
+# ===== SSH key generation =====
+SSH_KEY_PATH="${HOME}/.ssh/id_rsa"
+if [[ ! -f "${SSH_KEY_PATH}.pub" ]]; then
+  echo "No SSH key found at ${SSH_KEY_PATH}.pub, generating a new one..."
+  mkdir -p ~/.ssh
+  ssh-keygen -t rsa -b 4096 -f "${SSH_KEY_PATH}" -N ""
+  echo "SSH key generated at ${SSH_KEY_PATH}.pub"
+else
+  echo "SSH key already exists at ${SSH_KEY_PATH}.pub"
+fi
+
+# ===== Terraform variables setup =====
+TFVARS_FILE="terraform.tfvars"
+if [[ -f "${TFVARS_FILE}" ]]; then
+  echo "${TFVARS_FILE} already exists, skipping creation."
+else
+  echo "Enter your Hetzner Cloud API token:"
+  read -r HCLOUD_TOKEN
+
+  cat > "${TFVARS_FILE}" <<EOF
+hcloud_token        = "${HCLOUD_TOKEN}"
+ssh_public_key_path = "${SSH_KEY_PATH}.pub"
+EOF
+
+  echo "terraform.tfvars file created with your Hetzner token and SSH public key path."
+fi
+
+
 
 # ===== Config =====
 HOST_KEY="group1-continuum"        # The inventory host whose IP we need
