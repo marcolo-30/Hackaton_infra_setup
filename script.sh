@@ -1,23 +1,12 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-<<<<<<< HEAD
 ###############################################################################
 # MLSysOps One-Click Deploy (resumable steps)
 # - Supports resume via --from-step=N
 # - Asks (or accepts --group=N/groupN) to target groupN-* hosts
 # - Clear START/END comments per step for easy editing
 ###############################################################################
-=======
-
-# ===== Start time =====
-START_TIME=$(date '+%Y-%m-%d %H:%M:%S')
-echo "â±ï¸ Script started at: ${START_TIME}"
-
-
-# ===== Pre-flight checks =====
-echo "Checking for required dependencies..."
->>>>>>> cee8fc729a6b34b9ae01e1962bf332cb250e6689
 
 # ----------------------------- CLI & Resume ----------------------------------
 START_FROM_STEP=1
@@ -62,23 +51,8 @@ REMOTE_USER="mlsysops"
 REMOTE_HOME="/home/${REMOTE_USER}"
 ORCH_DIR="mlsysops-framework/orchestrators"
 
-<<<<<<< HEAD
 # ----------------------------- Helpers ---------------------------------------
 TOTAL_STEPS=12     # Steps 0..11 inclusive
-=======
-DEPLOY_TIME=$(date '+%Y-%m-%d %H:%M:%S')
-echo "â±ï¸ Script started at: ${DEPLOY_TIME}"
-
-terraform init
-
-# ===== Config =====
-HOST_KEY="group1-continuum"        # The inventory host whose IP we need
-REMOTE_USER="mlsysops"             # SSH user on the remote
-REMOTE_HOME="/home/${REMOTE_USER}" # Remote home dir
-
-# ===== Helpers =====
-TOTAL_STEPS=8
->>>>>>> cee8fc729a6b34b9ae01e1962bf332cb250e6689
 STEP=0
 
 die() {
@@ -102,7 +76,6 @@ run_with_retries() {
   done
 }
 
-<<<<<<< HEAD
 run_step() {
   local n="$1"; shift
   local title="$1"; shift
@@ -170,9 +143,6 @@ ensure_ip() {
 # ----------------------------- Timestamps ------------------------------------
 START_TIME=$(date '+%Y-%m-%d %H:%M:%S')
 echo "[INFO] Script started at: ${START_TIME}"
-=======
-
->>>>>>> cee8fc729a6b34b9ae01e1962bf332cb250e6689
 
 # ------------------------- STEP 0: Pre-flight checks -------------------------
 if run_step 0 "Pre-flight checks (Terraform/Ansible)"; then
@@ -521,13 +491,7 @@ fi
 
 # ------------------------------- Done ----------------------------------------
 END_TIME=$(date '+%Y-%m-%d %H:%M:%S')
-<<<<<<< HEAD
 echo
 echo "[SUCCESS] 100% COMPLETED."
 echo "[INFO] Started : ${START_TIME}"
 echo "[INFO] Finished: ${END_TIME}"
-=======
-echo "ðŸŽ‰ 100% COMPLETED: All steps finished successfully!"
-echo "â±ï¸ Deploy started at: ${DEPLOY_TIME}"
-echo "â±ï¸ Script finished at: ${END_TIME}"
->>>>>>> cee8fc729a6b34b9ae01e1962bf332cb250e6689
